@@ -9,7 +9,6 @@ uses
   ExtCtrls;
 
 type
-
   { TForm1 }
 
   TForm1 = class(TForm)
@@ -31,21 +30,36 @@ type
     procedure CalculateExchangeClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure GetProductInfoFromID(Code: String);
+    procedure Image1Click(Sender: TObject);
+    procedure CleanUp();
+    procedure UpdateTotalPrice();
+    procedure UpdateNotaFiscal();
   private
 
   public
 
   end;
 
+type
+  TProduct = object
+      Code: String;
+      Quantity: Integer;
+      Price: Double;
+      ProductLabel: String;
+      NotaFiscalString: String;
+      function CalculatePrice(ATotal: Double; APrice: Double; AQuantity: Integer): Double;
+  end;
+
 var
   Form1: TForm1;
-  Code: String;
-  Quantity: Integer;
-  Total: Double;
-  Price: Double;
-  ProductLabel: String;
-  NotaFiscalString: String;
+  Product: TProduct;
+  TotalValue: Double;
   ExchangeVal: Double;
+  DialogResult: Integer;
+  AdminPassword: String;
+
+const
+     Password = 'admin123';
 
 implementation
 
@@ -63,98 +77,138 @@ begin
     case Code of
          '123456':
             begin
-                 ProductLabel := 'ÁGUA MINERAL LA FONTE';
-                 Price := 1.00;
+                 Product.ProductLabel := 'ÁGUA MINERAL LA FONTE';
+                 Product.Price := 1.00;
             end;
          '987654':
             begin
-                 ProductLabel := 'SABONETE FRANCIS';
-                 Price := 3.15;
+                 Product.ProductLabel := 'SABONETE FRANCIS';
+                 Product.Price := 3.15;
             end;
          '999876':
             begin
-                 ProductLabel := 'DETERGENTE YPÊ';
-                 Price := 4.79;
+                 Product.ProductLabel := 'DETERGENTE YPÊ';
+                 Product.Price := 4.79;
             end;
          '133345':
             begin
-                 ProductLabel := 'SABÃO EM PÓ YPÊ';
-                 Price := 6.47;
+                 Product.ProductLabel := 'SABÃO EM PÓ YPÊ';
+                 Product.Price := 6.47;
             end;
          '876542':
             begin
-                 ProductLabel := 'LEITE LONGA VIDA';
-                 Price := 4.99;
+                 Product.ProductLabel := 'LEITE LONGA VIDA';
+                 Product.Price := 4.99;
             end;
          '132331':
             begin
-                 ProductLabel := 'REFRIGERANTE COCA COLA';
-                 Price := 6.87;
+                 Product.ProductLabel := 'REFRIGERANTE COCA COLA';
+                 Product.Price := 6.87;
             end;
          '919191':
             begin
-                 ProductLabel := 'LEITE TERRA VIVA';
-                 Price := 4.22;
+                 Product.ProductLabel := 'LEITE TERRA VIVA';
+                 Product.Price := 4.22;
             end;
          '049876':
             begin
-                 ProductLabel := 'SALGADINHO FANDANGOS QUEIJO';
-                 Price := 2.49;
+                 Product.ProductLabel := 'SALGADINHO FANDANGOS QUEIJO';
+                 Product.Price := 2.49;
             end;
          '131925':
             begin
-                 ProductLabel := 'CAMISINHA DESFRUTE O PRAZER';
-                 Price := 3.99;
+                 Product.ProductLabel := 'CAMISINHA DESFRUTE O PRAZER';
+                 Product.Price := 3.99;
             end;
          else
               begin
-                   ProductLabel := 'NOT_FOUND';
+                   Product.ProductLabel := 'NOT_FOUND';
               end;
     end;
 end;
 
+procedure TForm1.Image1Click(Sender: TObject);
+begin
+
+end;
+
+procedure TForm1.CleanUp();
+begin
+    ProductCode.Text := '';
+    ProductQuantity.Value := 1;
+end;
+
+procedure TForm1.UpdateTotalPrice();
+begin
+   TotalPrice.Caption := Format('TOTAL A PAGAR: R$ %.2f', [TotalValue]);
+end;
+
+procedure TForm1.UpdateNotaFiscal();
+begin
+   Product.NotaFiscalString := Format('%s - QT. %d - UNID. R$ %.2f', [Product.ProductLabel, Product.Quantity, Product.Price]);
+   NotaFiscal.Items.Add(Product.NotaFiscalString);
+end;
+
 procedure TForm1.AddToCheckoutClick(Sender: TObject);
 begin
-    Code := ProductCode.Text;
-    Quantity := ProductQuantity.Value;
+    Product.Code := ProductCode.Text;
+    Product.Quantity := ProductQuantity.Value;
 
-    GetProductInfoFromID(Code);
+    GetProductInfoFromID(Product.Code);
 
-    if ProductLabel = 'NOT_FOUND' then
+    if Product.ProductLabel = 'NOT_FOUND' then
        begin
-            ProductCode.Text := '';
-            ProductQuantity.Value := 1;
+            CleanUP();
+            Application.MessageBox('O produto não pôde ser encontrado. Certifique-se de que seu código esteja correto.','Produto não cadastrado',0);
             Exit;
        end;
-    //Price := 9.99;
 
-    Total := Total + (Price * Quantity);
+    TotalValue := Product.CalculatePrice(TotalValue, Product.Price, Product.Quantity);
 
-    TotalPrice.Caption := Format('TOTAL A PAGAR: R$ %.2f', [Total]);
+    UpdateTotalPrice();
 
     ProductCode.Text := '';
     ProductQuantity.Value := 1;
 
     //Adicionar na nota fiscal
-    NotaFiscalString := Format('%s - QT. %d - UNID. R$ %.2f', [ProductLabel, Quantity, Total]);
-    NotaFiscal.Items.Add(NotaFiscalString);
+    UpdateNotaFiscal();
 end;
 
 procedure TForm1.Button1Click(Sender: TObject);
 begin
-    Total := 0.0;
-    ExchangeVal := 0.0;
-    NotaFiscal.Items.Clear;
+    DialogResult := MessageDlg('Tem certeza de que deseja cancelar a compra?', mtConfirmation, mbYesNo, 0);
 
-    TotalPrice.Caption := Format('TOTAL A PAGAR: R$ %.2f', [Total]);
-    Exchange.Caption := Format('TROCO: R$ %.2f', [ExchangeVal]);
+    if DialogResult = mrYes then
+       begin
+            if InputQuery('Insira a senha do administrador', 'Senha do Administrador:', AdminPassword) then
+               begin
+                    if AdminPassword = Password then
+                       begin
+                         TotalValue := 0.0;
+                         ExchangeVal := 0.0;
+                         NotaFiscal.Items.Clear;
+
+                         UpdateTotalPrice();
+                         Exchange.Caption := Format('TROCO: R$ %.2f', [ExchangeVal]);
+                         Exit;
+                       end;
+
+                    Application.MessageBox('A senha informada está incorreta. Contate o administrador para obtê-la.', 'Senha incorreta', 0)
+               end;
+       end;
 end;
 
 procedure TForm1.CalculateExchangeClick(Sender: TObject);
 begin
-  ExchangeVal := ExchangeValue.Value - Total;
+  ExchangeVal := ExchangeValue.Value - TotalValue;
 
   Exchange.Caption := Format('TROCO: R$ %.2f', [ExchangeVal]);
+end;
+
+{ TProduct }
+function TProduct.CalculatePrice(ATotal: Double; APrice: Double; AQuantity: Integer): Double;
+begin
+   Exit(ATotal + (APrice * AQuantity));
 end;
 
 end.

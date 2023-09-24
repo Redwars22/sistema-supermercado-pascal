@@ -4,8 +4,8 @@ object Form1: TForm1
   Top = 131
   Width = 891
   Caption = 'Condor - Sistema do Caixa'
-  ClientHeight = 0
-  ClientWidth = 0
+  ClientHeight = 537
+  ClientWidth = 891
   Color = clWhite
   OnCreate = FormCreate
   LCLVersion = '2.2.6.0'
@@ -23,7 +23,9 @@ object Form1: TForm1
     Height = 272
     Top = 152
     Width = 312
+    Font.Name = 'Bahnschrift'
     ItemHeight = 0
+    ParentFont = False
     TabOrder = 1
   end
   object TotalPrice: TLabel
@@ -88,9 +90,10 @@ object Form1: TForm1
   end
   object Image1: TImage
     Left = 24
-    Height = 73
+    Height = 80
     Top = 24
-    Width = 302
+    Width = 264
+    OnClick = Image1Click
     Picture.Data = {
       1754506F727461626C654E6574776F726B477261706869637E08000089504E47
       0D0A1A0A0000000D49484452000000FF000000410803000000291682FD000001
