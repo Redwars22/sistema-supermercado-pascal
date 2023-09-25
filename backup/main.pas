@@ -13,12 +13,14 @@ type
 
   TForm1 = class(TForm)
     Button1: TButton;
+    EndSession: TButton;
     CalculateExchange: TButton;
     AddToCheckout: TButton;
     ExchangeValue: TFloatSpinEdit;
     Image1: TImage;
     Image2: TImage;
     Image3: TImage;
+    UserLabel: TLabel;
     Label3: TLabel;
     ProductCode: TEdit;
     TotalPrice: TLabel;
@@ -28,12 +30,14 @@ type
     procedure AddToCheckoutClick(Sender: TObject);
     procedure Button1Click(Sender: TObject);
     procedure CalculateExchangeClick(Sender: TObject);
+    procedure EndSessionClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure GetProductInfoFromID(Code: String);
     procedure Image1Click(Sender: TObject);
     procedure CleanUp();
     procedure UpdateTotalPrice();
     procedure UpdateNotaFiscal();
+    function AskForAdminPassword(): Boolean;
   private
 
   public
@@ -57,6 +61,7 @@ var
   ExchangeVal: Double;
   DialogResult: Integer;
   AdminPassword: String;
+  UserName: String;
 
 const
      Password = 'admin123';
@@ -69,7 +74,27 @@ implementation
 
 procedure TForm1.FormCreate(Sender: TObject);
 begin
+   while AdminPassword <> Password do
+         begin
+              if AskForAdminPassword() then
+                 begin
+                      if AdminPassword = Password then
+                         begin
+                              break;
+                         end;
 
+                      Application.MessageBox('A senha informada está incorreta. Contate o administrador para obtê-la.', 'Senha incorreta', 0);
+                      continue;
+                 end;
+
+              halt(0);
+         end;
+
+   if Password = 'admin123' then
+      begin
+           UserName := 'JÉSSICA ALVES DOS SANTOS';
+           UserLabel.Caption := Format('OPERADOR DO CAIXA: %s - SESSÃO ABERTA ÀS %s', [UserName, DateTimeToStr(Now)]);
+      end;
 end;
 
 procedure TForm1.GetProductInfoFromID(Code: String);
@@ -174,13 +199,19 @@ begin
     UpdateNotaFiscal();
 end;
 
+//Pedir a senha do admin
+function TForm1.AskForAdminPassword(): Boolean;
+begin
+    Exit(InputQuery('Insira a senha do administrador', 'Senha do Administrador:', AdminPassword) );
+end;
+
 procedure TForm1.Button1Click(Sender: TObject);
 begin
     DialogResult := MessageDlg('Tem certeza de que deseja cancelar a compra?', mtConfirmation, mbYesNo, 0);
 
     if DialogResult = mrYes then
        begin
-            if InputQuery('Insira a senha do administrador', 'Senha do Administrador:', AdminPassword) then
+            if AskForAdminPassword() then
                begin
                     if AdminPassword = Password then
                        begin
@@ -203,6 +234,20 @@ begin
   ExchangeVal := ExchangeValue.Value - TotalValue;
 
   Exchange.Caption := Format('TROCO: R$ %.2f', [ExchangeVal]);
+end;
+
+procedure TForm1.EndSessionClick(Sender: TObject);
+begin
+    if AskForAdminPassword() then
+       begin
+            if AdminPassword = Password then
+               begin
+                    Application.MessageBox(Format('A sessão foi encerrada com sucesso às %s', [DateTimeToStr(Now)]), 'Senha incorreta', 0);
+                    halt(0);
+               end;
+
+            Application.MessageBox('A senha informada está incorreta. Contate o administrador para obtê-la.', 'Senha incorreta', 0);
+       end;
 end;
 
 { TProduct }
